@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	mathutil "github.com/cznic/mathutil"
 	"github.com/wenslayer/grpc-go-course/calculator/calculatorpb"
 	"google.golang.org/grpc"
 )
@@ -16,7 +17,7 @@ func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculat
 
 	operands := req.GetOperands().GetInts()
 
-	var sum int32 = 0
+	var sum int64 = 0
 	for _, num := range operands {
 		sum += num
 	}
@@ -30,19 +31,19 @@ func (*server) Sum(ctx context.Context, req *calculatorpb.SumRequest) (*calculat
 func (*server) PrimeFactorization(req *calculatorpb.PrimeFactorizationRequest, stream calculatorpb.CalculatorService_PrimeFactorizationServer) error {
 	log.Printf("PrimeFactorization() invoked with: %v\n", req)
 
-	prime := req.GetNumber()
-	var factor int32 = 2
+	numberToFactor := req.GetNumber()
+	var divisor int64 = 2
 
-	for prime > 1 {
-		if prime%factor == 0 {
+	for numberToFactor > 1 {
+		if numberToFactor%divisor == 0 {
 			res := &calculatorpb.PrimeFactorizationResponse{
-				Factor: factor,
+				Factor: divisor,
 			}
 			stream.Send(res)
 
-			prime = prime / factor
+			numberToFactor = numberToFactor / divisor
 		} else {
-			factor++
+			divisor++
 		}
 	}
 

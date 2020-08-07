@@ -21,7 +21,7 @@ func main() {
 
 	c := calculatorpb.NewCalculatorServiceClient(connection)
 
-	doSum(c)
+	// doSum(c)
 	doPrimeFactorization(c)
 }
 
@@ -30,7 +30,7 @@ func doSum(c calculatorpb.CalculatorServiceClient) {
 
 	req := &calculatorpb.SumRequest{
 		Operands: &calculatorpb.Operands{
-			Ints: []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+			Ints: []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 		},
 	}
 	res, err := c.Sum(context.Background(), req)
@@ -44,7 +44,7 @@ func doSum(c calculatorpb.CalculatorServiceClient) {
 func doPrimeFactorization(c calculatorpb.CalculatorServiceClient) {
 	fmt.Println("Start PrimeFactorization stream RPC...")
 
-	var number int32 = 120
+	var number int64 = 7898765131657
 
 	req := &calculatorpb.PrimeFactorizationRequest{
 		Number: number,
@@ -55,7 +55,7 @@ func doPrimeFactorization(c calculatorpb.CalculatorServiceClient) {
 		log.Fatalf("error while calling PrimeFactorization() RPC: %v", err)
 	}
 
-	var factors []int32
+	var factors []int64
 
 	for {
 		msg, err := resStream.Recv()
