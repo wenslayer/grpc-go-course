@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 
-	mathutil "github.com/cznic/mathutil"
 	"github.com/wenslayer/grpc-go-course/calculator/calculatorpb"
 	"google.golang.org/grpc"
 )
