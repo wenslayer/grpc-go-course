@@ -33,6 +33,7 @@ func (*server) PrimeFactorization(req *calculatorpb.PrimeFactorizationRequest, s
 	numberToFactor := req.GetNumber()
 	var divisor int64 = 2
 
+	// TODO: implement https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
 	for numberToFactor > 1 {
 		if numberToFactor%divisor == 0 {
 			res := &calculatorpb.PrimeFactorizationResponse{

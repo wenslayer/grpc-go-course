@@ -44,13 +44,15 @@ func doSum(c calculatorpb.CalculatorServiceClient) {
 func doPrimeFactorization(c calculatorpb.CalculatorServiceClient) {
 	fmt.Println("Start PrimeFactorization stream RPC...")
 
-	// var number int64 = int64Pow(2, 16) - 15 // 65521
 	// var number int64 = 104729
 	// var number int64 = 15485863
 	// var number int64 = 512927357
+	// var number int64 = 7898765131657
+
+	// From https://primes.utm.edu/lists/2small/0bit.html
+	// var number int64 = int64Pow(2, 16) - 15 // 65521
 	// var number int64 = int64Pow(2, 32) - 5 // 4294967291
 	var number int64 = int64Pow(2, 33) - 9 // 8589934583
-	// var number int64 = 7898765131657
 
 	req := &calculatorpb.PrimeFactorizationRequest{
 		Number: number,
