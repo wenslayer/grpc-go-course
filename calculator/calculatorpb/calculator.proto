@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package calculator;
+option go_package = "calculatorpb";
+
+message Operands { repeated sint32 ints = 1; }
+
+message SumRequest { Operands operands = 1; }
+message SumResponse { sint32 result = 1; }
+
+message PrimeFactorizationRequest { sint32 number = 1; }
+message PrimeFactorizationResponse { sint32 factor = 1; }
+
+service CalculatorService {
+
+  rpc Sum(SumRequest) returns (SumResponse) {};
+
+  rpc PrimeFactorization(PrimeFactorizationRequest)
+      returns (stream PrimeFactorizationResponse) {};
+}
