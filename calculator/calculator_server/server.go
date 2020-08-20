@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"net"
 
@@ -48,6 +49,30 @@ func (*server) PrimeFactorization(req *calculatorpb.PrimeFactorizationRequest, s
 	}
 
 	return nil
+}
+
+func (*server) Average(stream calculatorpb.CalculatorService_AverageServer) error {
+	log.Println("Average() invoked")
+
+	sum, count := int64(0), int64(0)
+	res := &calculatorpb.AverageResponse{Average: 0}
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			if count > 0 {
+				res.Average = float32(sum) / float32(count)
+			}
+			return stream.SendAndClose(res)
+		}
+		if err != nil {
+			log.Fatalf("error while reading client stream: %v\n", err)
+		}
+
+		count++
+		sum += req.GetNumber()
+		log.Printf("%d: Sum now %d\n", count, sum)
+	}
 }
 
 func main() {

@@ -11,10 +11,15 @@ message SumResponse { sint64 result = 1; }
 message PrimeFactorizationRequest { sint64 number = 1; }
 message PrimeFactorizationResponse { sint64 factor = 1; }
 
+message AverageRequest { sint64 number = 1; }
+message AverageResponse { float average = 1; }
+
 service CalculatorService {
 
   rpc Sum(SumRequest) returns (SumResponse) {};
 
   rpc PrimeFactorization(PrimeFactorizationRequest)
       returns (stream PrimeFactorizationResponse) {};
+
+  rpc Average(stream AverageRequest) returns (AverageResponse) {};
 }

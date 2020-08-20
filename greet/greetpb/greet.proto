@@ -14,11 +14,17 @@ message GreetResponse { string result = 1; }
 message GreetManyTimesRequest { Greeting greeting = 1; }
 message GreetManyTimesResponse { string result = 1; }
 
+message LongGreetRequest { Greeting greeting = 1; }
+message LongGreetResponse { string result = 1; }
+
 service GreetService {
   // Unary
   rpc Greet(GreetRequest) returns (GreetResponse) {};
 
-  // Stream
+  // Server Stream
   rpc GreetManyTimes(GreetManyTimesRequest)
       returns (stream GreetManyTimesResponse) {};
+
+  // Client stream
+  rpc LongGreet(stream LongGreetRequest) returns (LongGreetResponse) {};
 }

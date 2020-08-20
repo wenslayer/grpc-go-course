@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/wenslayer/grpc-go-course/calculator/calculatorpb"
 	"google.golang.org/grpc"
@@ -22,7 +23,8 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(connection)
 
 	// doSum(c)
-	doPrimeFactorization(c)
+	// doPrimeFactorization(c)
+	doAverage(c)
 }
 
 func doSum(c calculatorpb.CalculatorServiceClient) {
@@ -80,6 +82,32 @@ func doPrimeFactorization(c calculatorpb.CalculatorServiceClient) {
 	}
 
 	fmt.Printf("Factors of %d: %v\n", number, factors)
+}
+
+func doAverage(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Start client stream Average() RPC...")
+
+	numbers := []int64{24125, 30240, 24724, 17204, 26260, 8592, 9956, 22152, 11852, 22334}
+
+	req := &calculatorpb.AverageRequest{Number: 0}
+
+	stream, err := c.Average(context.Background())
+	if err != nil {
+		log.Fatalf("error while calling Average(): %v\n", err)
+	}
+
+	for _, num := range numbers {
+		fmt.Printf("Send req: %v\n", num)
+		req.Number = num
+		stream.Send(req)
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("error while reading: %v", err)
+	}
+	fmt.Printf("average: %v\n", res.GetAverage())
 }
 
 func int64Pow(x int, y int) int64 {
