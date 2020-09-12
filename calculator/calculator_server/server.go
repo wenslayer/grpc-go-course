@@ -61,7 +61,7 @@ func (*server) Average(stream calculatorpb.CalculatorService_AverageServer) erro
 		req, err := stream.Recv()
 		if err == io.EOF {
 			if count > 0 {
-				res.Average = float32(sum) / float32(count)
+				res.Average = float64(sum) / float64(count)
 			}
 			return stream.SendAndClose(res)
 		}
@@ -72,6 +72,34 @@ func (*server) Average(stream calculatorpb.CalculatorService_AverageServer) erro
 		count++
 		sum += req.GetNumber()
 		log.Printf("%d: Sum now %d\n", count, sum)
+	}
+}
+
+func (*server) Maximum(stream calculatorpb.CalculatorService_MaximumServer) error {
+	log.Println("Maximum() invoked")
+
+	res := &calculatorpb.MaximumResponse{Maximum: 0}
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+			return err
+		}
+
+		num := req.GetNumber()
+		if num > res.Maximum {
+			res.Maximum = num
+			log.Printf("Max now %20d\n", res.Maximum)
+			sendErr := stream.Send(res)
+			if sendErr != nil {
+				log.Fatalf("Error while sending data to client: %v", sendErr)
+				return sendErr
+			}
+		}
 	}
 }
 

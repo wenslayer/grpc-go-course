@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/wenslayer/grpc-go-course/calculator/calculatorpb"
@@ -24,7 +25,8 @@ func main() {
 
 	// doSum(c)
 	// doPrimeFactorization(c)
-	doAverage(c)
+	// doAverage(c)
+	doMaximum(c)
 }
 
 func doSum(c calculatorpb.CalculatorServiceClient) {
@@ -94,6 +96,7 @@ func doAverage(c calculatorpb.CalculatorServiceClient) {
 	stream, err := c.Average(context.Background())
 	if err != nil {
 		log.Fatalf("error while calling Average(): %v\n", err)
+		return
 	}
 
 	for _, num := range numbers {
@@ -108,6 +111,50 @@ func doAverage(c calculatorpb.CalculatorServiceClient) {
 		log.Fatalf("error while reading: %v", err)
 	}
 	fmt.Printf("average: %v\n", res.GetAverage())
+}
+
+func doMaximum(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Start client stream Maximum() RPC...")
+
+	req := &calculatorpb.MaximumRequest{Number: 0}
+
+	stream, err := c.Maximum(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream: %v", err)
+		return
+	}
+
+	// Establish channel for waiting
+	waitc := make(chan struct{})
+
+	go func() {
+		for {
+			num := rand.Int63()
+			fmt.Printf("Send req: %20d\n", num)
+			req.Number = num
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving: %v", err)
+				break
+			}
+			fmt.Printf("\nReceived: %20d\n\n", res.GetMaximum())
+		}
+		close(waitc)
+
+	}()
+
+	<-waitc
 }
 
 func int64Pow(x int, y int) int64 {

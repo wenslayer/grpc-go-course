@@ -23,9 +23,9 @@ func main() {
 	c := greetpb.NewGreetServiceClient(connection)
 
 	// doUnary(c)
-
 	// doServerStreaming(c)
-	doClientStreaming(c)
+	// doClientStreaming(c)
+	doBiDiStreaming(c)
 }
 
 // func doUnary(connection *grpc.ClientConn) {
@@ -123,4 +123,74 @@ func doClientStreaming(c greetpb.GreetServiceClient) {
 		log.Fatalf("error while reading: %v", err)
 	}
 	fmt.Printf("response:\n%v\n", res.GetResult())
+}
+
+func doBiDiStreaming(c greetpb.GreetServiceClient) {
+	fmt.Println("Start BiDi stream RPC...")
+
+	// create stream
+	stream, err := c.GreetEveryone(context.Background())
+	if err != nil {
+		log.Fatalf("Error while creating stream: %v", err)
+		return
+	}
+
+	requests := []*greetpb.GreetEveryoneRequest{
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Larry",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Curly",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Moe",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Mary",
+			},
+		},
+		&greetpb.GreetEveryoneRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Flo",
+			},
+		},
+	}
+
+	waitc := make(chan struct{})
+
+	// send messages
+	go func() {
+		for _, req := range requests {
+			fmt.Printf("Send message: %v\n", req)
+			stream.Send(req)
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	// receive messages
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error while receiving: %v", err)
+				break
+			}
+			fmt.Printf("Received: %v\n", res.GetResult())
+		}
+		close(waitc)
+	}()
+
+	// block
+	<-waitc
 }

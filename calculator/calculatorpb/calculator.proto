@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package calculator;
-option go_package = "calculatorpb";
+option go_package = "calculator/calculatorpb";
 
 message Operands { repeated sint64 ints = 1; }
 
@@ -12,7 +12,10 @@ message PrimeFactorizationRequest { sint64 number = 1; }
 message PrimeFactorizationResponse { sint64 factor = 1; }
 
 message AverageRequest { sint64 number = 1; }
-message AverageResponse { float average = 1; }
+message AverageResponse { double average = 1; }
+
+message MaximumRequest { sint64 number = 1; }
+message MaximumResponse { sint64 maximum = 1; }
 
 service CalculatorService {
 
@@ -22,4 +25,6 @@ service CalculatorService {
       returns (stream PrimeFactorizationResponse) {};
 
   rpc Average(stream AverageRequest) returns (AverageResponse) {};
+
+  rpc Maximum(stream MaximumRequest) returns (stream MaximumResponse) {};
 }
