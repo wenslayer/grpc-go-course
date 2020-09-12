@@ -17,8 +17,11 @@ message AverageResponse { double average = 1; }
 message MaximumRequest { sint64 number = 1; }
 message MaximumResponse { sint64 maximum = 1; }
 
-service CalculatorService {
+message SquareRootRequest { sint64 number = 1; }
+message SquareRootResponse { double result = 1; }
 
+// Service
+service CalculatorService {
   rpc Sum(SumRequest) returns (SumResponse) {};
 
   rpc PrimeFactorization(PrimeFactorizationRequest)
@@ -27,4 +30,8 @@ service CalculatorService {
   rpc Average(stream AverageRequest) returns (AverageResponse) {};
 
   rpc Maximum(stream MaximumRequest) returns (stream MaximumResponse) {};
+
+  // This will throw exception if given number is negative.
+  // Error is type of INVALID_ARGUMENT
+  rpc SquareRoot(SquareRootRequest) returns (SquareRootResponse) {};
 }

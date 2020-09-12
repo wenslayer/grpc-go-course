@@ -8,6 +8,10 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/grpc/status"
+
+	"google.golang.org/grpc/codes"
+
 	"github.com/wenslayer/grpc-go-course/greet/greetpb"
 	"google.golang.org/grpc"
 )
@@ -88,6 +92,31 @@ func (*server) GreetEveryone(stream greetpb.GreetService_GreetEveryoneServer) er
 			return sendErr
 		}
 	}
+}
+
+func (*server) GreetWithDeadline(ctx context.Context, req *greetpb.GreetWithDeadlineRequest) (*greetpb.GreetWithDeadlineResponse, error) {
+	log.Printf("GreetWithDeadline() invoked with: %v\n", req)
+
+	numContextChecks := 3
+	for i := 1; i <= numContextChecks; i++ {
+		log.Printf("...check context [%d/%d]...\n", i, numContextChecks)
+		if ctx.Err() != nil {
+			log.Printf("...context error detected: >>> %v <<<\n", ctx.Err())
+			return nil, status.Error(codes.Canceled, "client canceled the request")
+		}
+		time.Sleep(1 * time.Second)
+	}
+	log.Println("...context checked")
+
+	firstName := req.GetGreeting().GetFirstName()
+	lastName := req.GetGreeting().GetLastName()
+
+	result := "Guten tag, Herr Doktor Diplomingenieur " + lastName + ". May I call you " + firstName + "?"
+	res := &greetpb.GreetWithDeadlineResponse{
+		Result: result,
+	}
+
+	return res, nil
 }
 
 func main() {

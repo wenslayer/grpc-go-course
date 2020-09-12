@@ -10,10 +10,13 @@ import (
 
 	"github.com/wenslayer/grpc-go-course/calculator/calculatorpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
 	fmt.Println("Hello world, I'm a client.")
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	connection, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
@@ -26,7 +29,8 @@ func main() {
 	// doSum(c)
 	// doPrimeFactorization(c)
 	// doAverage(c)
-	doMaximum(c)
+	// doMaximum(c)
+	doSquareRoot(c)
 }
 
 func doSum(c calculatorpb.CalculatorServiceClient) {
@@ -163,4 +167,34 @@ func int64Pow(x int, y int) int64 {
 		result = result * int64(x)
 	}
 	return result
+}
+
+func doSquareRoot(c calculatorpb.CalculatorServiceClient) {
+	fmt.Println("Start Square Root RPC...")
+
+	for i := 1; i <= 10; i++ {
+		getSquareRoot(c, rand.Int63n(1000))
+	}
+
+	getSquareRoot(c, -25)
+}
+func getSquareRoot(c calculatorpb.CalculatorServiceClient, n int64) {
+	res, err := c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{
+		Number: n,
+	})
+	if err != nil {
+		respErr, ok := status.FromError(err)
+		if ok {
+			fmt.Printf("Error message from server: <<< %v >>>\n", respErr.Message())
+			fmt.Printf("Error code    from server: <<< %v >>>\n", respErr.Code())
+			if respErr.Code() == codes.InvalidArgument {
+				fmt.Println("We probably sent a negative number!")
+				return
+			}
+		} else {
+			log.Fatalf("error while calling SquareRoot RPC: %v", err)
+		}
+	}
+
+	fmt.Printf("SquareRoot() response from [%v]: <<< %v >>>\n", n, res.Result)
 }
