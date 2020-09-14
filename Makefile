@@ -37,7 +37,9 @@ help: ## Show help message
 # Private files: ca.key, server.key, server.pem, server.crt
 # "Share" files: ca.crt (needed by the client), server.csr (needed by the CA)
 
-SSL_DIR   ?= ssl
+SSL_ENABLE ?= true
+
+SSL_DIR    ?= ssl
 
 SSL_CA_CRT = $(SSL_DIR)/ca.crt
 SSL_CA_KEY = $(SSL_DIR)/ca.key
@@ -156,7 +158,7 @@ calc_client  := calculator/calculator_client/client.go
 all_proto    := $(greet_proto) $(calc_proto)
 all_proto_go := $(all_proto:%.proto=%.pb.go)
 
-GO_RUN_FLAGS := -ldflags "-X main.HostAndPort=$(SERVER_CN):50051 -X main.CACertFile=$(SSL_CA_CRT) -X main.ServerCertFile=$(SSL_SERVER_CRT) -X main.ServerKeyFile=$(SSL_SERVER_PEM)"
+GO_RUN_FLAGS := -ldflags "-X main.HostAndPort=$(SERVER_CN):50051 -X main.CACertFile=$(SSL_CA_CRT) -X main.ServerCertFile=$(SSL_SERVER_CRT) -X main.ServerKeyFile=$(SSL_SERVER_PEM) -X main.SSLEnabled=$(SSL_ENABLE)"
 
 .PHONY: gen-proto
 gen-proto: $(all_proto_go) ## Generate code from all proto files

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -16,26 +17,38 @@ import (
 )
 
 // HostAndPort set at build time
-var HostAndPort = ""
+var HostAndPort = "localhost:12345"
+
+// SSLEnabled set at build time
+var SSLEnabled = "false"
 
 // CACertFile set at build time
 var CACertFile = ""
 
 func main() {
-	fmt.Println("Hello world, I'm a client.")
+	fmt.Println("Hello world, I'm a greet client")
 
-	// certFile := "ssl/ca.crt"
-	creds, sslErr := credentials.NewClientTLSFromFile(CACertFile, "")
-	if sslErr != nil {
-		log.Fatalf("Failed to load CA trust cert: %v", sslErr)
-		return
+	opts := grpc.WithInsecure()
+
+	useTLS, err := strconv.ParseBool(SSLEnabled)
+	if err != nil {
+		log.Fatalf("Could not convert to boolean: %v", SSLEnabled)
+	}
+	if useTLS {
+		fmt.Println("...secure communication ENABLED")
+		creds, sslErr := credentials.NewClientTLSFromFile(CACertFile, "")
+		if sslErr != nil {
+			log.Fatalf("Failed to load CA trust cert: %v", sslErr)
+			return
+		}
+
+		opts = grpc.WithTransportCredentials(creds)
+	} else {
+		fmt.Println("...secure communication DISABLED")
 	}
 
-	opts := grpc.WithTransportCredentials(creds)
+	fmt.Printf("...connect to [%v]...\n", HostAndPort)
 	connection, err := grpc.Dial(HostAndPort, opts)
-	// connection, err := grpc.Dial("localhost:50051", opts)
-	// connection, err := grpc.Dial("localhost.localdomain:50051", opts)
-	// connection, err := grpc.Dial("1672mbp-mwensau.local:50051", opts)
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}

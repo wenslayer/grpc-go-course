@@ -121,7 +121,10 @@ func (*server) GreetWithDeadline(ctx context.Context, req *greetpb.GreetWithDead
 }
 
 // HostAndPort set at build time
-var HostAndPort = ""
+var HostAndPort = "localhost:12345"
+
+// SSLEnabled set at build time
+var SSLEnabled = "false"
 
 // ServerCertFile set at build time
 var ServerCertFile = ""
@@ -132,26 +135,36 @@ var ServerKeyFile = ""
 func main() {
 	log.Println("Hello world, I'm a greet server")
 
+	log.Printf("...listen on [%v]...\n", HostAndPort)
 	listener, err := net.Listen("tcp", HostAndPort)
-	// listener, err := net.Listen("tcp", "0.0.0.0:50051")
-	// listener, err := net.Listen("tcp", "localhost:50051")
-	// listener, err := net.Listen("tcp", "localhost.localdomain:50051")
-	// listener, err := net.Listen("tcp", "1672mbp-mwensau.local:50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	creds, sslErr := credentials.NewServerTLSFromFile(ServerCertFile, ServerKeyFile)
-	if sslErr != nil {
-		log.Fatalf("Failed to load certificates: %v", sslErr)
-		return
-	}
-	opts := grpc.Creds(creds)
+	opts := []grpc.ServerOption{}
 
-	s := grpc.NewServer(opts)
+	useTLS, err := strconv.ParseBool(SSLEnabled)
+	if err != nil {
+		log.Fatalf("Could not convert to boolean: %v", SSLEnabled)
+	}
+	if useTLS {
+		log.Println("...secure communication ENABLED")
+		creds, sslErr := credentials.NewServerTLSFromFile(ServerCertFile, ServerKeyFile)
+		if sslErr != nil {
+			log.Fatalf("Failed to load certificates: %v", sslErr)
+			return
+		}
+		opts = append(opts, grpc.Creds(creds))
+	} else {
+		log.Println("...secure communication DISABLED")
+	}
+
+	s := grpc.NewServer(opts...)
 	greetpb.RegisterGreetServiceServer(s, &server{})
+	log.Println("...server registered; ready for connections...")
 
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
+	log.Println("...goodbye")
 }
