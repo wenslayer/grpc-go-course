@@ -38,21 +38,21 @@ help: ## Show help message
 # "Share" files: ca.crt (needed by the client), server.csr (needed by the CA)
 
 SSL_ENABLE ?= true
-
 SSL_DIR    ?= ssl
 
-SSL_CA_CRT = $(SSL_DIR)/ca.crt
-SSL_CA_KEY = $(SSL_DIR)/ca.key
-SSL_SERVER_CRT = $(SSL_DIR)/server.crt
-SSL_SERVER_CSR = $(SSL_DIR)/server.csr
-SSL_SERVER_KEY = $(SSL_DIR)/server.key
-SSL_SERVER_PEM = $(SSL_DIR)/server.pem
+SSL_CA_CRT     := $(SSL_DIR)/ca.crt
+SSL_CA_KEY     := $(SSL_DIR)/ca.key
+SSL_SERVER_CRT := $(SSL_DIR)/server.crt
+SSL_SERVER_CSR := $(SSL_DIR)/server.csr
+SSL_SERVER_KEY := $(SSL_DIR)/server.key
+SSL_SERVER_PEM := $(SSL_DIR)/server.pem
 
 SSL_FILES = $(SSL_CA_CRT) $(SSL_CA_KEY) $(SSL_SERVER_CRT) $(SSL_SERVER_CSR) $(SSL_SERVER_KEY) $(SSL_SERVER_PEM)
 
 # SERVER_CN ?= localhost
 SERVER_CN ?= localhost.localdomain
 # SERVER_CN ?= $(shell hostname)
+
 SSL_SUBJ  := /C=US/ST=WA/O=DreamBox Learning/CN=$(SERVER_CN)
 # SSL_SUBJ  := /C=US/ST=WA/O=DreamBox Learning
 # SSL_SAN_CONFIG := subjectAltName=DNS:$(SERVER_CN)
@@ -148,48 +148,47 @@ clean-ssl:
 # This project
 # ======================================================================
 
-greet_proto    := greet/greetpb/greet.proto
-greet_proto_go := $(greet_proto:%.proto=%.pb.go)
-greet_server   := greet/greet_server/server.go
-greet_client   := greet/greet_client/client.go
+GREET_PROTO    := greet/greetpb/greet.proto
+GREET_PROTO_GO := $(GREET_PROTO:%.proto=%.pb.go)
+GREET_SERVER   := greet/greet_server/server.go
+GREET_CLIENT   := greet/greet_client/client.go
 
-calc_proto    := calculator/calculatorpb/calculator.proto
-calc_proto_go := $(calc_proto:%.proto=%.pb.go)
-calc_server   := calculator/calculator_server/server.go
-calc_client   := calculator/calculator_client/client.go
+CALC_PROTO    := calculator/calculatorpb/calculator.proto
+CALC_PROTO_GO := $(CALC_PROTO:%.proto=%.pb.go)
+CALC_SERVER   := calculator/calculator_server/server.go
+CALC_CLIENT   := calculator/calculator_client/client.go
 
-all_proto    := $(greet_proto) $(calc_proto)
-all_proto_go := $(all_proto:%.proto=%.pb.go)
+ALL_PROTO    := $(GREET_PROTO) $(CALC_PROTO)
+ALL_PROTO_GO := $(ALL_PROTO:%.proto=%.pb.go)
 
-GO_RUN_FLAGS := -ldflags "-X main.HostAndPort=$(SERVER_CN):50051 -X main.CACertFile=$(SSL_CA_CRT) -X main.ServerCertFile=$(SSL_SERVER_CRT) -X main.ServerKeyFile=$(SSL_SERVER_PEM) -X main.SSLEnabled=$(SSL_ENABLE)"
+GO_RUN_FLAGS := -ldflags "\
+	-X main.HostAndPort=$(SERVER_CN):50051 \
+	-X main.CACertFile=$(SSL_CA_CRT) \
+	-X main.ServerCertFile=$(SSL_SERVER_CRT) \
+	-X main.ServerKeyFile=$(SSL_SERVER_PEM) \
+	-X main.SSLEnabled=$(SSL_ENABLE)\
+"
 
 .PHONY: gen-proto
-gen-proto: $(all_proto_go) ## Generate code from all proto files
+gen-proto: $(ALL_PROTO_GO) ## Generate code from all proto files
 %.pb.go: %.proto $(MAKEFILE_LIST)
-	@printf "$(PREMSG)Generate code from all proto files$(POSTMSG)"
+	@printf "$(PREMSG)Generate code from proto file ($@)$(POSTMSG)"
 	protoc "$<" --go_out=plugins=grpc:.
 
 .PHONY: clean-proto
 clean-proto: ## Clean up all generated code from proto files
 	@printf "$(PREMSG)Clean up all generated code from proto files$(POSTMSG)"
-	rm -fv -- $(all_proto_go)
+	rm -fv -- $(ALL_PROTO_GO)
 
 .PHONY: run-greet-server run-greet-client run-calc-server run-calc-client
-run-greet-server: $(greet_server) $(greet_proto_go) ssl-all ## Start the greet server
-	@printf "$(PREMSG)Start the greet server$(POSTMSG)"
-	go run $(GO_RUN_FLAGS) $<
+run-greet-server: ssl-all $(GREET_PROTO_GO) $(GREET_SERVER) ## Start the greet server
+run-greet-client: $(GREET_CLIENT) ## Run the greet client
+run-calc-server: ssl-all $(CALC_PROTO_GO) $(CALC_SERVER) ## Start the calc server
+run-calc-client: $(CALC_CLIENT) ## Run the calc client
 
-run-greet-client: $(greet_client) $(greet_proto_go) ## Run the greet client
-	@printf "$(PREMSG)Run the greet client$(POSTMSG)"
-	go run $(GO_RUN_FLAGS) $<
-
-run-calc-server: $(calc_server) $(calc_proto_go) ssl-all ## Start the calc server
-	@printf "$(PREMSG)Start the calc server$(POSTMSG)"
-	go run $(GO_RUN_FLAGS) $<
-
-run-calc-client: $(calc_client) $(calc_proto_go) ## Run the calc client
-	@printf "$(PREMSG)Run the calc client$(POSTMSG)"
-	go run $(GO_RUN_FLAGS) $<
+%.go: $(MAKEFILE_LIST)
+	@printf "$(PREMSG)Run [$(notdir $(*D))]...$(POSTMSG)"
+	go run $(GO_RUN_FLAGS) "$@"
 
 .PHONY: clean-all
 clean-all: clean-proto clean-ssl ## Run all 'clean-*' targets
