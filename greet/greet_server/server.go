@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
 	"google.golang.org/grpc/codes"
@@ -119,15 +120,35 @@ func (*server) GreetWithDeadline(ctx context.Context, req *greetpb.GreetWithDead
 	return res, nil
 }
 
+// HostAndPort set at build time
+var HostAndPort = ""
+
+// ServerCertFile set at build time
+var ServerCertFile = ""
+
+// ServerKeyFile set at build time
+var ServerKeyFile = ""
+
 func main() {
 	log.Println("Hello world, I'm a greet server")
 
-	listener, err := net.Listen("tcp", "0.0.0.0:50051")
+	listener, err := net.Listen("tcp", HostAndPort)
+	// listener, err := net.Listen("tcp", "0.0.0.0:50051")
+	// listener, err := net.Listen("tcp", "localhost:50051")
+	// listener, err := net.Listen("tcp", "localhost.localdomain:50051")
+	// listener, err := net.Listen("tcp", "1672mbp-mwensau.local:50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	creds, sslErr := credentials.NewServerTLSFromFile(ServerCertFile, ServerKeyFile)
+	if sslErr != nil {
+		log.Fatalf("Failed to load certificates: %v", sslErr)
+		return
+	}
+	opts := grpc.Creds(creds)
+
+	s := grpc.NewServer(opts)
 	greetpb.RegisterGreetServiceServer(s, &server{})
 
 	if err := s.Serve(listener); err != nil {
