@@ -70,6 +70,7 @@ export GODEBUG = x509ignoreCN=0
 ssl-all: $(SSL_FILES) ## Generate all SSL files
 
 $(SSL_DIR):
+	@printf "$(PREMSG)Create SSL directory ($@)$(POSTMSG)"
 	mkdir -p "$@"
 
 # Step 1
@@ -147,13 +148,15 @@ clean-ssl:
 # This project
 # ======================================================================
 
-greet_proto  := greet/greetpb/greet.proto
-greet_server := greet/greet_server/server.go
-greet_client := greet/greet_client/client.go
+greet_proto    := greet/greetpb/greet.proto
+greet_proto_go := $(greet_proto:%.proto=%.pb.go)
+greet_server   := greet/greet_server/server.go
+greet_client   := greet/greet_client/client.go
 
-calc_proto   := calculator/calculatorpb/calculator.proto
-calc_server  := calculator/calculator_server/server.go
-calc_client  := calculator/calculator_client/client.go
+calc_proto    := calculator/calculatorpb/calculator.proto
+calc_proto_go := $(calc_proto:%.proto=%.pb.go)
+calc_server   := calculator/calculator_server/server.go
+calc_client   := calculator/calculator_client/client.go
 
 all_proto    := $(greet_proto) $(calc_proto)
 all_proto_go := $(all_proto:%.proto=%.pb.go)
@@ -169,24 +172,24 @@ gen-proto: $(all_proto_go) ## Generate code from all proto files
 .PHONY: clean-proto
 clean-proto: ## Clean up all generated code from proto files
 	@printf "$(PREMSG)Clean up all generated code from proto files$(POSTMSG)"
-	rm -f -- $(all_proto_go)
-
-.PHONY: clean-all
-clean-all: clean-proto clean-ssl ## Run all 'clean-*' targets
+	rm -fv -- $(all_proto_go)
 
 .PHONY: run-greet-server run-greet-client run-calc-server run-calc-client
-run-greet-server: $(greet_server) $(greet_proto) ssl-all ## Start the greet server
+run-greet-server: $(greet_server) $(greet_proto_go) ssl-all ## Start the greet server
 	@printf "$(PREMSG)Start the greet server$(POSTMSG)"
 	go run $(GO_RUN_FLAGS) $<
 
-run-greet-client: $(greet_client) $(greet_proto) ## Run the greet client
+run-greet-client: $(greet_client) $(greet_proto_go) ## Run the greet client
 	@printf "$(PREMSG)Run the greet client$(POSTMSG)"
 	go run $(GO_RUN_FLAGS) $<
 
-run-calc-server: $(calc_server) $(calc_proto) ssl-all ## Start the calc server
+run-calc-server: $(calc_server) $(calc_proto_go) ssl-all ## Start the calc server
 	@printf "$(PREMSG)Start the calc server$(POSTMSG)"
 	go run $(GO_RUN_FLAGS) $<
 
-run-calc-client: $(calc_client) $(calc_proto) ## Run the calc client
+run-calc-client: $(calc_client) $(calc_proto_go) ## Run the calc client
 	@printf "$(PREMSG)Run the calc client$(POSTMSG)"
 	go run $(GO_RUN_FLAGS) $<
+
+.PHONY: clean-all
+clean-all: clean-proto clean-ssl ## Run all 'clean-*' targets
