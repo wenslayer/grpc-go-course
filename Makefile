@@ -16,7 +16,7 @@ POSTMSG   := $(COLOR_OFF)\n\n
 .PHONY: default help
 default: help
 help: ## Show help message
-	@printf "$(PREMSG) usage: make [target]\n$(POSTMSG)"
+	@printf "$(PREMSG) usage: make [target]$(POSTMSG)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%s\033[0m#%s\n", $$1, $$2}' $(MAKEFILE_LIST) | column -t -s# | sort
 
 # ======================================================================
@@ -141,7 +141,7 @@ $(SSL_SERVER_PEM):$(SSL_SERVER_KEY) $(MAKEFILE_LIST)
 	chmod -v go-rwx "$@"
 
 .PHONY: clean-ssl
-clean-ssl:
+clean-ssl: ## Remove the generated SSL files
 	rm -frv -- "./$(SSL_DIR)"
 
 # ======================================================================
