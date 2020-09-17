@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
 	"google.golang.org/grpc/codes"
@@ -162,6 +163,8 @@ func main() {
 	s := grpc.NewServer(opts...)
 	greetpb.RegisterGreetServiceServer(s, &server{})
 	log.Println("...server registered; ready for connections...")
+	reflection.Register(s)
+	log.Println("...reflection registered...")
 
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)

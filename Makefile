@@ -161,8 +161,10 @@ CALC_CLIENT   := calculator/calculator_client/client.go
 ALL_PROTO    := $(GREET_PROTO) $(CALC_PROTO)
 ALL_PROTO_GO := $(ALL_PROTO:%.proto=%.pb.go)
 
+HOST          ?= $(SERVER_CN)
+PORT          ?= 50051
 GO_RUN_FLAGS := -ldflags "\
-	-X main.HostAndPort=$(SERVER_CN):50051 \
+	-X main.HostAndPort=$(HOST):$(PORT) \
 	-X main.CACertFile=$(SSL_CA_CRT) \
 	-X main.ServerCertFile=$(SSL_SERVER_CRT) \
 	-X main.ServerKeyFile=$(SSL_SERVER_PEM) \
@@ -181,14 +183,22 @@ clean-proto: ## Clean up all generated code from proto files
 	rm -fv -- $(ALL_PROTO_GO)
 
 .PHONY: run-greet-server run-greet-client run-calc-server run-calc-client
-run-greet-server: ssl-all $(GREET_PROTO_GO) $(GREET_SERVER) ## Start the greet server
-run-greet-client: $(GREET_CLIENT) ## Run the greet client
-run-calc-server: ssl-all $(CALC_PROTO_GO) $(CALC_SERVER) ## Start the calc server
-run-calc-client: $(CALC_CLIENT) ## Run the calc client
+run-greet-server: ssl-all $(GREET_PROTO_GO) $(GREET_SERVER).run ## Start the greet server
+run-greet-client: $(GREET_CLIENT).run ## Run the greet client
+run-calc-server: ssl-all $(CALC_PROTO_GO) $(CALC_SERVER).run ## Start the calc server
+run-calc-client: $(CALC_CLIENT).run ## Run the calc client
 
-%.go: $(MAKEFILE_LIST)
+.PHONY: %.go.run
+%.go.run: %.go $(MAKEFILE_LIST)
 	@printf "$(PREMSG)Run [$(notdir $(*D))]...$(POSTMSG)"
-	go run $(GO_RUN_FLAGS) "$@"
+	go run $(GO_RUN_FLAGS) "$<"
 
 .PHONY: clean-all
 clean-all: clean-proto clean-ssl ## Run all 'clean-*' targets
+
+.PHONY: evans
+ifeq ($(SSL_ENABLE), true)
+  EVANS_TLS_ARGS=--tls --cacert $(SSL_CA_CRT) --cert $(SSL_SERVER_CRT) --certkey $(SSL_SERVER_PEM)
+endif
+evans:
+	evans --host $(HOST) --port $(PORT) --reflection $(EVANS_TLS_ARGS)
